@@ -1,0 +1,27 @@
+# Virtual Environment
+backend/venv/
+
+# Python
+__pycache__/
+*.pyc
+
+# Database
+db.sqlite3
+
+# Environment Variables
+.env
+
+# Media Files
+media/
+
+# Static Files
+staticfiles/
+
+# VS Code
+.vscode/
+
+# PyCharm
+.idea/
+
+# Node
+node_modules/
