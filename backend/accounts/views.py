@@ -12,7 +12,7 @@ from .serializers import (
     LoginSerializer,
     UserProfileSerializer,
     ChangePasswordSerializer,
-    
+    LogoutSerializer,
 )
 
 
@@ -59,6 +59,32 @@ class LoginView(APIView):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
+class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = LogoutSerializer(data=request.data)
+
+        if serializer.is_valid():
+            try:
+                refresh_token = RefreshToken(serializer.validated_data["refresh"])
+                refresh_token.blacklist()
+
+                return Response(
+                    {"message": "Logout successful."},
+                    status=status.HTTP_200_OK
+                )
+
+            except Exception:
+                return Response(
+                    {"error": "Invalid or expired refresh token."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
 class ProfileView(APIView):
     permission_classes = [IsAuthenticated]
