@@ -11,5 +11,10 @@ class ResumeSerializer(serializers.ModelSerializer):
             "title",
             "file",
             "uploaded_at",
+            "extracted_text",
         ]
-        read_only_fields = ["id", "uploaded_at"]
+        read_only_fields = [
+    "id",
+    "extracted_text",
+    "uploaded_at",
+]
