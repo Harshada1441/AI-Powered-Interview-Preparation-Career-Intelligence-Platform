@@ -324,49 +324,123 @@ function ResumeAnalyzer({ onBack }) {
 
 
         {/* ========================= */}
-        {/* RESULT SECTION */}
+        {/* PROFESSIONAL RESULT SECTION */}
         {/* ========================= */}
 
         {result && (
-
           <div className="results-container">
 
-            {/* MATCH SCORE */}
+            {/* RESULT HEADER */}
+            <div className="result-header-card">
 
-            {matchResult && (
+              <div>
+                <span className="result-badge">
+                  ✓ Analysis Complete
+                </span>
 
-              <div className="match-card">
-
-                <p className="result-label">
-                  Target Role
-                </p>
-
-                <h2>
-                  {matchResult.target_role || targetRole}
-                </h2>
-
-                <div className="match-score">
-                  {matchResult.score}%
-                </div>
+                <h2>Resume Analysis</h2>
 
                 <p>
-                  Resume Match Score
+                  Your resume has been analyzed successfully.
                 </p>
-
               </div>
 
+              <div className="target-role-box">
+                <span>Target Role</span>
+
+                <strong>
+                  {matchResult?.target_role || targetRole}
+                </strong>
+              </div>
+
+            </div>
+
+
+            {/* SCORE + STATS */}
+            {matchResult && (
+              <div className="result-summary">
+
+                <div className="match-card">
+
+                  <p className="result-label">
+                    Resume Match Score
+                  </p>
+
+                  <div className="match-score">
+                    {matchResult.score}%
+                  </div>
+
+                  <p className="score-description">
+                    Based on your skills and target role
+                  </p>
+
+                </div>
+
+
+                <div className="summary-stats">
+
+                  <div className="summary-stat">
+                    <strong>
+                      {matchResult.matched_skills?.length || 0}
+                    </strong>
+
+                    <span>Matched Skills</span>
+                  </div>
+
+
+                  <div className="summary-stat">
+                    <strong>
+                      {matchResult.missing_skills?.length || 0}
+                    </strong>
+
+                    <span>Missing Skills</span>
+                  </div>
+
+
+                  <div className="summary-stat">
+                    <strong>
+                      {result.projects?.length || 0}
+                    </strong>
+
+                    <span>Projects</span>
+                  </div>
+
+
+                  <div className="summary-stat">
+                    <strong>
+                      {result.certifications?.length || 0}
+                    </strong>
+
+                    <span>Certifications</span>
+                  </div>
+
+                </div>
+
+              </div>
             )}
 
 
             {/* MATCHED SKILLS */}
-
-            {matchResult?.matched_skills && (
+            {matchResult?.matched_skills?.length > 0 && (
 
               <div className="result-card">
 
-                <h2>
-                  ✓ Matched Skills
-                </h2>
+                <div className="result-card-title">
+
+                  <div className="section-icon matched-icon">
+                    ✓
+                  </div>
+
+                  <div>
+                    <h2>Matched Skills</h2>
+
+                    <p>
+                      Skills that match your target job role.
+                    </p>
+                  </div>
+
+                </div>
+
 
                 <div className="result-skills matched">
 
@@ -374,7 +448,7 @@ function ResumeAnalyzer({ onBack }) {
                     (skill, index) => (
 
                       <span key={index}>
-                        {skill}
+                        ✓ {skill}
                       </span>
 
                     )
@@ -388,14 +462,26 @@ function ResumeAnalyzer({ onBack }) {
 
 
             {/* MISSING SKILLS */}
-
-            {matchResult?.missing_skills && (
+            {matchResult?.missing_skills?.length > 0 && (
 
               <div className="result-card">
 
-                <h2>
-                  ! Missing Skills
-                </h2>
+                <div className="result-card-title">
+
+                  <div className="section-icon missing-icon">
+                    !
+                  </div>
+
+                  <div>
+                    <h2>Skills to Improve</h2>
+
+                    <p>
+                      Skills you should consider learning.
+                    </p>
+                  </div>
+
+                </div>
+
 
                 <div className="result-skills missing">
 
@@ -403,7 +489,7 @@ function ResumeAnalyzer({ onBack }) {
                     (skill, index) => (
 
                       <span key={index}>
-                        {skill}
+                        + {skill}
                       </span>
 
                     )
@@ -417,50 +503,86 @@ function ResumeAnalyzer({ onBack }) {
 
 
             {/* RECOMMENDATIONS */}
-
-            {matchResult?.recommendations && (
+            {matchResult?.recommendations?.length > 0 && (
 
               <div className="result-card">
 
-                <h2>
-                  💡 Recommendations
-                </h2>
+                <div className="result-card-title">
 
-                {matchResult.recommendations.map(
-                  (item, index) => (
+                  <div className="section-icon recommendation-icon">
+                    💡
+                  </div>
 
-                    <div
-                      className="recommendation"
-                      key={index}
-                    >
+                  <div>
+                    <h2>Personalized Recommendations</h2>
 
-                      <h3>
-                        {item.skill}
-                      </h3>
+                    <p>
+                      Recommended areas to improve your profile.
+                    </p>
+                  </div>
 
-                      <p>
-                        {item.recommendation}
-                      </p>
+                </div>
 
-                    </div>
 
-                  )
-                )}
+                <div className="recommendations-list">
+
+                  {matchResult.recommendations.map(
+                    (item, index) => (
+
+                      <div
+                        className="recommendation"
+                        key={index}
+                      >
+
+                        <div className="recommendation-number">
+                          {index + 1}
+                        </div>
+
+                        <div>
+
+                          <h3>
+                            {item.skill}
+                          </h3>
+
+                          <p>
+                            {item.recommendation}
+                          </p>
+
+                        </div>
+
+                      </div>
+
+                    )
+                  )}
+
+                </div>
 
               </div>
 
             )}
 
 
-            {/* SKILLS */}
-
-            {result.skills && (
+            {/* RESUME SKILLS */}
+            {result.skills?.length > 0 && (
 
               <div className="result-card">
 
-                <h2>
-                  🛠 Skills
-                </h2>
+                <div className="result-card-title">
+
+                  <div className="section-icon skills-icon">
+                    🛠
+                  </div>
+
+                  <div>
+                    <h2>Your Resume Skills</h2>
+
+                    <p>
+                      Skills extracted from your resume.
+                    </p>
+                  </div>
+
+                </div>
+
 
                 <div className="result-skills">
 
@@ -482,14 +604,26 @@ function ResumeAnalyzer({ onBack }) {
 
 
             {/* EXPERIENCE */}
-
-            {result.experience && (
+            {result.experience?.length > 0 && (
 
               <div className="result-card">
 
-                <h2>
-                  💼 Experience
-                </h2>
+                <div className="result-card-title">
+
+                  <div className="section-icon experience-icon">
+                    💼
+                  </div>
+
+                  <div>
+                    <h2>Experience</h2>
+
+                    <p>
+                      Professional experience from your resume.
+                    </p>
+                  </div>
+
+                </div>
+
 
                 {result.experience.map(
                   (item, index) => (
@@ -501,9 +635,7 @@ function ResumeAnalyzer({ onBack }) {
 
                       {typeof item === "string" ? (
 
-                        <p>
-                          {item}
-                        </p>
+                        <p>{item}</p>
 
                       ) : (
 
@@ -521,7 +653,6 @@ function ResumeAnalyzer({ onBack }) {
 
                             )
                           )}
-
                         </>
 
                       )}
@@ -537,21 +668,36 @@ function ResumeAnalyzer({ onBack }) {
 
 
             {/* EDUCATION */}
-
-            {result.education && (
+            {result.education?.length > 0 && (
 
               <div className="result-card">
 
-                <h2>
-                  🎓 Education
-                </h2>
+                <div className="result-card-title">
+
+                  <div className="section-icon education-icon">
+                    🎓
+                  </div>
+
+                  <div>
+                    <h2>Education</h2>
+
+                    <p>
+                      Academic qualifications from your resume.
+                    </p>
+                  </div>
+
+                </div>
+
 
                 {result.education.map(
                   (education, index) => (
 
-                    <p key={index}>
-                      • {education}
-                    </p>
+                    <div
+                      className="education-item"
+                      key={index}
+                    >
+                      🎓 {education}
+                    </div>
 
                   )
                 )}
@@ -562,14 +708,26 @@ function ResumeAnalyzer({ onBack }) {
 
 
             {/* PROJECTS */}
-
-            {result.projects && (
+            {result.projects?.length > 0 && (
 
               <div className="result-card">
 
-                <h2>
-                  🚀 Projects
-                </h2>
+                <div className="result-card-title">
+
+                  <div className="section-icon project-icon">
+                    🚀
+                  </div>
+
+                  <div>
+                    <h2>Projects</h2>
+
+                    <p>
+                      Projects identified from your resume.
+                    </p>
+                  </div>
+
+                </div>
+
 
                 {result.projects.map(
                   (project, index) => (
@@ -581,9 +739,7 @@ function ResumeAnalyzer({ onBack }) {
 
                       {typeof project === "string" ? (
 
-                        <p>
-                          {project}
-                        </p>
+                        <p>{project}</p>
 
                       ) : (
 
@@ -610,21 +766,36 @@ function ResumeAnalyzer({ onBack }) {
 
 
             {/* CERTIFICATIONS */}
-
-            {result.certifications && (
+            {result.certifications?.length > 0 && (
 
               <div className="result-card">
 
-                <h2>
-                  🏆 Certifications
-                </h2>
+                <div className="result-card-title">
+
+                  <div className="section-icon certificate-icon">
+                    🏆
+                  </div>
+
+                  <div>
+                    <h2>Certifications</h2>
+
+                    <p>
+                      Certifications found in your resume.
+                    </p>
+                  </div>
+
+                </div>
+
 
                 {result.certifications.map(
                   (certificate, index) => (
 
-                    <p key={index}>
-                      • {certificate}
-                    </p>
+                    <div
+                      className="certificate-item"
+                      key={index}
+                    >
+                      🏆 {certificate}
+                    </div>
 
                   )
                 )}
@@ -634,22 +805,32 @@ function ResumeAnalyzer({ onBack }) {
             )}
 
 
-            {/* ANALYZE AGAIN */}
+            {/* ACTION BUTTONS */}
+            <div className="result-actions">
 
-            <button
-              className="analyze-again-btn"
-              onClick={() => {
-                setResume(null);
-                setResult(null);
-                setMatchResult(null);
-                setError("");
-              }}
-            >
-              Analyze Another Resume
-            </button>
+              <button
+                className="analyze-again-btn"
+                onClick={() => {
+                  setResume(null);
+                  setResult(null);
+                  setMatchResult(null);
+                  setError("");
+                }}
+              >
+                ↻ Analyze Another Resume
+              </button>
+
+
+              <button
+                className="dashboard-result-btn"
+                onClick={onBack}
+              >
+                ← Back to Dashboard
+              </button>
+
+            </div>
 
           </div>
-
         )}
 
       </main>
