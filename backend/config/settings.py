@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     # Local Apps
     'accounts',
     'resumes',
+    'interviews',
 ]
 
 

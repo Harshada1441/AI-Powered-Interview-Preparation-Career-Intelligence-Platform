@@ -4,6 +4,9 @@ import Login from "./Login";
 import Dashboard from "./Dashboard";
 import Register from "./Register";
 import ResumeAnalyzer from "./ResumeAnalyzer";
+import InterviewSetup from "./InterviewSetup";
+import InterviewRoom from "./InterviewRoom";
+
 
 
 function App() {
@@ -11,8 +14,33 @@ function App() {
   const [showDashboard, setShowDashboard] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
   const [showResumeAnalyzer, setShowResumeAnalyzer] = useState(false);
+  const [showInterviewSetup, setShowInterviewSetup] = useState(false);
+  const [interviewData, setInterviewData] = useState(null);
+  
 
 
+  // Interview Room
+  if (interviewData) {
+    return (
+      <InterviewRoom
+        interview={interviewData}
+        onExit={() => setInterviewData(null)}
+      />
+    );
+  }
+
+  // Interview Setup
+  if (showInterviewSetup) {
+    return (
+      <InterviewSetup
+        onBack={() => setShowInterviewSetup(false)}
+        onInterviewStart={(data) => {
+          setInterviewData(data);
+          console.log("Interview created:", data);
+        }}
+      />
+    );
+  }
 
   // Resume Analyzer
   if (showResumeAnalyzer) {
@@ -22,12 +50,13 @@ function App() {
       />
     );
   }
-  
+
   // Dashboard
   if (showDashboard) {
     return (
       <Dashboard
         onAnalyzeResume={() => setShowResumeAnalyzer(true)}
+        onStartInterview={() => setShowInterviewSetup(true)}
       />
     );
   }

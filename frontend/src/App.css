@@ -306,3 +306,68 @@ footer {
     width: 100%;
   }
 }
+
+/* =========================================
+   FIX HOME PAGE TEXT VISIBILITY
+   ========================================= */
+
+.app {
+  color: #172033;
+}
+
+/* Hero heading */
+.hero-content h1 {
+  color: #172033 !important;
+}
+
+.hero-content h1 span {
+  color: #4f63d8 !important;
+}
+
+/* Hero description */
+.hero-content > p {
+  color: #475569 !important;
+}
+
+/* Badge */
+.badge {
+  color: #4f63d8 !important;
+}
+
+/* Features section heading */
+.features h2 {
+  color: #172033 !important;
+}
+
+/* Features subtitle */
+.section-subtitle {
+  color: #64748b !important;
+}
+
+/* Feature card headings */
+.feature-card h3 {
+  color: #172033 !important;
+}
+
+/* Feature card descriptions */
+.feature-card p {
+  color: #64748b !important;
+}
+
+/* Navbar */
+.logo {
+  color: #172033 !important;
+}
+
+.nav-links a {
+  color: #334155 !important;
+}
+
+.nav-links a:hover {
+  color: #4f63d8 !important;
+}
+
+/* Footer */
+footer p {
+  color: #64748b !important;
+}

@@ -23,6 +23,9 @@ SKILLS = [
     "HTML",
     "CSS",
     "JavaScript",
+    "Statistics",
+    "Data Visualization",
+    
 ]
 
 

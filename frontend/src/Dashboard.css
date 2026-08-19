@@ -57,3 +57,38 @@
   color: white;
   cursor: pointer;
 }
+
+/* ================================
+   FIX DASHBOARD TEXT VISIBILITY
+   ================================ */
+
+.dashboard {
+  color: #172033;
+}
+
+.dashboard-content h1 {
+  color: #172033 !important;
+}
+
+.dashboard-content > p {
+  color: #475569 !important;
+}
+
+.dashboard-card h2 {
+  color: #172033 !important;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.dashboard-card p {
+  color: #475569 !important;
+  line-height: 1.6;
+}
+
+.dashboard-card button {
+  color: #ffffff !important;
+}
+
+.dashboard-logo {
+  color: #172033 !important;
+}

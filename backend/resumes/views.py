@@ -8,6 +8,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from .models import Resume, ResumeAnalysis
 from .serializers import ResumeSerializer
 from .utils import extract_text_from_pdf
+from .services import analyze_resume
 
 
 class ResumeUploadView(APIView):
@@ -25,6 +26,9 @@ class ResumeUploadView(APIView):
             resume.extracted_text = extracted_text
             resume.save(update_fields=["extracted_text"])
 
+            # Analyze resume and create ResumeAnalysis
+            analyze_resume(resume)
+
             return Response(
                 ResumeSerializer(resume).data,
                 status=status.HTTP_201_CREATED
@@ -34,7 +38,6 @@ class ResumeUploadView(APIView):
             serializer.errors,
             status=status.HTTP_400_BAD_REQUEST
         )
-
 
 
 class ResumeListView(APIView):

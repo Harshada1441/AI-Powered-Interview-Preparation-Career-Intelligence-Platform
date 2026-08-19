@@ -33,26 +33,49 @@ def analyze_resume(resume):
 
 
 
+def normalize_skill(skill):
+    """
+    Normalize skill names so small formatting differences
+    do not prevent matching.
+    """
+
+    return (
+        skill.lower()
+        .strip()
+        .replace("-", "")
+        .replace("_", "")
+        .replace(" ", "")
+        .replace(".", "")
+    )
+
+
 def calculate_resume_match(resume):
+
     analysis = resume.analysis
 
     target_role = analysis.target_role
 
     required_skills = get_required_skills(target_role)
 
-    resume_skills = [
-        skill.lower()
-        for skill in analysis.skills
-    ]
+    resume_skills = analysis.skills or []
+
+    # Normalize resume skills
+    normalized_resume_skills = {
+        normalize_skill(skill)
+        for skill in resume_skills
+    }
 
     matched_skills = []
     missing_skills = []
 
-    for skill in required_skills:
-        if skill.lower() in resume_skills:
-            matched_skills.append(skill)
+    for required_skill in required_skills:
+
+        normalized_required = normalize_skill(required_skill)
+
+        if normalized_required in normalized_resume_skills:
+            matched_skills.append(required_skill)
         else:
-            missing_skills.append(skill)
+            missing_skills.append(required_skill)
 
     total_required = len(required_skills)
 
