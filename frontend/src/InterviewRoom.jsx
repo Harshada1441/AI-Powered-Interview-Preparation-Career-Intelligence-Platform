@@ -29,6 +29,16 @@ function InterviewRoom({ interview, onExit }) {
 
   const [evaluation, setEvaluation] = useState(null);
 
+  const [evaluations, setEvaluations] = useState([]);
+
+  const [overallScore, setOverallScore] = useState(
+    interview?.score ?? null
+  );
+
+  const [overallFeedback, setOverallFeedback] = useState(
+    interview?.feedback ?? ""
+  );
+
   const [finished, setFinished] = useState(false);
 
   // =====================================================
@@ -69,6 +79,48 @@ function InterviewRoom({ interview, onExit }) {
       window.speechSynthesis.cancel();
     };
   }, []);
+
+  // =====================================================
+  // ATTACH CAMERA STREAM TO VIDEO ELEMENT
+  // =====================================================
+
+  useEffect(() => {
+    if (!cameraEnabled) return;
+
+    const video = videoRef.current;
+    const stream = cameraStreamRef.current;
+
+    if (!video || !stream) {
+      console.warn("Camera video element/stream not ready.");
+      return;
+    }
+
+    video.srcObject = stream;
+    video.muted = true;
+    video.playsInline = true;
+
+    const playVideo = async () => {
+      try {
+        await video.play();
+        console.log("📹 Camera video is playing.");
+      } catch (err) {
+        console.error("📹 Camera video play error:", err);
+        setError(
+          "Camera is active but the video preview could not start."
+        );
+      }
+    };
+
+    if (video.readyState >= 1) {
+      playVideo();
+    } else {
+      video.onloadedmetadata = playVideo;
+    }
+
+    return () => {
+      video.onloadedmetadata = null;
+    };
+  }, [cameraEnabled]);
 
   // =====================================================
   // CAMERA + MICROPHONE
@@ -294,6 +346,11 @@ function InterviewRoom({ interview, onExit }) {
       cameraStreamRef.current = null;
     }
 
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.srcObject = null;
+    }
+
     if (microphoneStreamRef.current) {
       microphoneStreamRef.current.getTracks().forEach((track) => track.stop());
       microphoneStreamRef.current = null;
@@ -468,11 +525,6 @@ function InterviewRoom({ interview, onExit }) {
           });
 
           cameraStreamRef.current = cameraStream;
-
-          if (videoRef.current) {
-            videoRef.current.srcObject = cameraStream;
-          }
-
           setCameraEnabled(true);
         } catch (cameraError) {
           console.warn("Camera unavailable:", cameraError);
@@ -687,13 +739,40 @@ function InterviewRoom({ interview, onExit }) {
           "AI could not generate a transcript."
         );
 
-        setEvaluation({
-          score:
-            data.score,
+        const currentEvaluation = {
+          questionId: currentQuestion.id,
+          question: currentQuestion.question,
+          order: currentQuestion.order ?? currentIndex + 1,
+          transcript: data.transcript || "",
+          score: Number(data.score ?? 0),
+          feedback: data.feedback || "",
+        };
 
-          feedback:
-            data.feedback || "",
+        setEvaluation({
+          score: currentEvaluation.score,
+          feedback: currentEvaluation.feedback,
         });
+
+        setEvaluations((previous) => {
+          const withoutCurrent = previous.filter(
+            (item) => item.questionId !== currentQuestion.id
+          );
+
+          return [...withoutCurrent, currentEvaluation].sort(
+            (a, b) => a.order - b.order
+          );
+        });
+
+        if (
+          data.overall_score !== null &&
+          data.overall_score !== undefined
+        ) {
+          setOverallScore(Number(data.overall_score));
+        }
+
+        if (data.overall_feedback) {
+          setOverallFeedback(data.overall_feedback);
+        }
 
       } catch (err) {
         console.error(
@@ -770,40 +849,171 @@ function InterviewRoom({ interview, onExit }) {
   // =====================================================
 
   if (finished) {
+    const completedCount = evaluations.length;
+
+    const calculatedScore =
+      overallScore !== null && overallScore !== undefined
+        ? Number(overallScore)
+        : completedCount > 0
+          ? Number(
+              (
+                evaluations.reduce(
+                  (sum, item) => sum + Number(item.score || 0),
+                  0
+                ) / completedCount
+              ).toFixed(2)
+            )
+          : 0;
+
+    const resultFeedback =
+      overallFeedback ||
+      (
+        calculatedScore >= 8.5
+          ? "Excellent interview performance. You demonstrated strong technical knowledge and clear answers."
+          : calculatedScore >= 7
+            ? "Good interview performance. Focus on improving answer depth and clarity."
+            : calculatedScore >= 5
+              ? "Average interview performance. Practice technical depth, practical examples, and answer clarity."
+              : "Your interview performance needs improvement. Strengthen your technical concepts and practice more interview questions."
+      );
+
     return (
       <div className="interview-finished">
-        <div className="finished-card">
+        <div
+          className="finished-card"
+          style={{
+            width: "850px",
+            maxWidth: "92%",
+            maxHeight: "90vh",
+            overflowY: "auto",
+          }}
+        >
+          <div className="finished-icon">🎉</div>
 
-          <div className="finished-icon">
-            🎉
-          </div>
-
-          <h1>
-            Interview Completed!
-          </h1>
+          <h1>Interview Completed!</h1>
 
           <p>
-            Great job! You completed
-            your AI mock interview.
+            Great job! You completed your AI mock interview.
           </p>
 
-          <div className="finished-summary">
-            <strong>
-              {questions.length}
-            </strong>
+          <div
+            className="finished-summary"
+            style={{
+              marginTop: "25px",
+              marginBottom: "20px",
+            }}
+          >
+            <strong>{calculatedScore.toFixed(1)} / 10</strong>
+
+            <span>Overall Interview Score</span>
 
             <span>
-              Questions Completed
+              {completedCount} / {questions.length} Questions Completed
             </span>
           </div>
 
-          <button
-            className="exit-btn"
-            onClick={onExit}
+          <div
+            style={{
+              marginTop: "20px",
+              marginBottom: "25px",
+              padding: "20px",
+              background: "#f5f7ff",
+              borderRadius: "14px",
+              textAlign: "left",
+            }}
           >
+            <h3 style={{ marginTop: 0, marginBottom: "10px" }}>
+              🤖 AI Overall Feedback
+            </h3>
+
+            <p
+              style={{
+                margin: 0,
+                lineHeight: 1.6,
+                color: "#475569",
+              }}
+            >
+              {resultFeedback}
+            </p>
+          </div>
+
+          {evaluations.length > 0 && (
+            <div
+              style={{
+                textAlign: "left",
+                marginBottom: "25px",
+              }}
+            >
+              <h3>📊 Question-wise Performance</h3>
+
+              {evaluations.map((item) => (
+                <div
+                  key={item.questionId}
+                  style={{
+                    marginTop: "15px",
+                    padding: "18px",
+                    border: "1px solid #e2e8f0",
+                    borderRadius: "14px",
+                    background: "#ffffff",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      gap: "15px",
+                      alignItems: "flex-start",
+                    }}
+                  >
+                    <strong>
+                      Q{item.order}. {item.question}
+                    </strong>
+
+                    <span
+                      style={{
+                        flexShrink: 0,
+                        fontWeight: 700,
+                        color:
+                          item.score >= 7
+                            ? "#16a34a"
+                            : item.score >= 5
+                              ? "#d97706"
+                              : "#dc2626",
+                      }}
+                    >
+                      {Number(item.score).toFixed(1)}/10
+                    </span>
+                  </div>
+
+                  <p
+                    style={{
+                      marginBottom: "8px",
+                      color: "#475569",
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    <strong>Your Answer:</strong>{" "}
+                    {item.transcript || "No transcript available."}
+                  </p>
+
+                  <p
+                    style={{
+                      marginBottom: 0,
+                      color: "#475569",
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    <strong>AI Feedback:</strong>{" "}
+                    {item.feedback || "No feedback available."}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <button className="exit-btn" onClick={onExit}>
             ← Back to Dashboard
           </button>
-
         </div>
       </div>
     );
@@ -954,6 +1164,12 @@ function InterviewRoom({ interview, onExit }) {
                   autoPlay
                   muted
                   playsInline
+                  style={{
+                    display: "block",
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                  }}
                 />
               ) : (
                 <div className="camera-placeholder">

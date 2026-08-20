@@ -6,18 +6,23 @@ class InterviewQuestionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = InterviewQuestion
+
         fields = [
             "id",
             "question",
             "difficulty",
             "order",
             "user_answer",
+            "answer_score",
+            "answer_feedback",
             "is_correct",
             "created_at",
         ]
 
         read_only_fields = [
             "id",
+            "answer_score",
+            "answer_feedback",
             "is_correct",
             "created_at",
         ]

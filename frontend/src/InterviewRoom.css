@@ -164,13 +164,29 @@
   justify-content: center;
 }
 
+.camera-container {
+  width: 100%;
+  height: 230px;
+  overflow: hidden;
+  background: #111827;
+  border-radius: 15px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .camera-container video {
+  display: block;
   width: 100%;
   height: 100%;
-
   object-fit: cover;
-
   transform: scaleX(-1);
+  background: #111827;
+}
+
+.camera-container video:not([srcObject]) {
+  display: none;
 }
 
 .camera-placeholder {
