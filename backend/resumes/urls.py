@@ -43,4 +43,10 @@ urlpatterns = [
         ResumeMatchView.as_view(),
         name="resume-match"
     ),
+
+    path(
+        "list/",
+        ResumeListView.as_view(),
+        name="resume-list"
+    ),
 ]

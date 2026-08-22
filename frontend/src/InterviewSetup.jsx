@@ -2,20 +2,35 @@ import { useEffect, useState } from "react";
 import "./InterviewSetup.css";
 
 function InterviewSetup({ onBack, onInterviewStart }) {
-  const [resumes, setResumes] = useState([]);
-  const [selectedResume, setSelectedResume] = useState("");
+  const [mode, setMode] = useState("resume");
 
   const [role, setRole] = useState("Data Scientist");
+  const [topic, setTopic] = useState("");
+
   const [difficulty, setDifficulty] = useState("medium");
   const [totalQuestions, setTotalQuestions] = useState(10);
 
-  const [loadingResumes, setLoadingResumes] = useState(true);
-  const [loadingInterview, setLoadingInterview] = useState(false);
+  const [resumes, setResumes] = useState([]);
+  const [resumeId, setResumeId] = useState("");
+
+  const [loadingResumes, setLoadingResumes] = useState(false);
+  const [loading, setLoading] = useState(false);
+
   const [error, setError] = useState("");
 
-  // Load user's uploaded resumes
+  // -----------------------------------------
+  // Load user's resumes
+  // -----------------------------------------
+
   useEffect(() => {
+    if (mode !== "resume") {
+      return;
+    }
+
     const fetchResumes = async () => {
+      setLoadingResumes(true);
+      setError("");
+
       try {
         const token = localStorage.getItem("access_token");
 
@@ -33,22 +48,46 @@ function InterviewSetup({ onBack, onInterviewStart }) {
           }
         );
 
-        const data = await response.json();
+        const contentType = response.headers.get("content-type") || "";
 
         if (!response.ok) {
-          throw new Error(
+          let errorMessage = `Failed to load resumes (${response.status}).`;
 
-            data.detail || "Unable to load resumes."
+          if (contentType.includes("application/json")) {
+            const errorData = await response.json();
+            errorMessage =
+              errorData.detail ||
+              errorData.error ||
+              errorMessage;
+          } else {
+            const errorText = await response.text();
+            console.error("Resume API response:", errorText);
+          }
+
+          throw new Error(errorMessage);
+        }
+
+        if (!contentType.includes("application/json")) {
+          const errorText = await response.text();
+          console.error("Unexpected Resume API response:", errorText);
+          throw new Error(
+            "Resume API returned an unexpected response."
           );
         }
 
-        setResumes(data);
+        const data = await response.json();
 
-        if (data.length > 0) {
-          setSelectedResume(String(data[0].id));
+        // Support common API response formats
+        const resumeList = Array.isArray(data)
+          ? data
+          : data.results || data.resumes || [];
+
+        setResumes(resumeList);
+
+        if (resumeList.length > 0) {
+          setResumeId(String(resumeList[0].id));
         }
       } catch (error) {
-        console.error("Resume loading error:", error);
         setError(error.message);
       } finally {
         setLoadingResumes(false);
@@ -56,17 +95,61 @@ function InterviewSetup({ onBack, onInterviewStart }) {
     };
 
     fetchResumes();
-  }, []);
+  }, [mode]);
+
+  // -----------------------------------------
+  // Handle mode change
+  // -----------------------------------------
+
+  const handleModeChange = (selectedMode) => {
+    setMode(selectedMode);
+    setError("");
+
+    if (selectedMode === "resume") {
+      setTopic("");
+    }
+
+    if (selectedMode === "topic") {
+      setResumeId("");
+    }
+
+    if (selectedMode === "hr") {
+      setResumeId("");
+      setTopic("");
+    }
+  };
+
+  // -----------------------------------------
+  // Start Interview
+  // -----------------------------------------
 
   const handleStartInterview = async () => {
     setError("");
 
-    if (!selectedResume) {
-      setError("Please select a resume first.");
-      return;
+    // -----------------------------------------
+    // Frontend validation
+    // -----------------------------------------
+
+    if (mode === "resume") {
+      if (!resumeId) {
+        setError("Please select a resume.");
+        return;
+      }
+
+      if (!role.trim()) {
+        setError("Please select a target job role.");
+        return;
+      }
     }
 
-    setLoadingInterview(true);
+    if (mode === "topic") {
+      if (!topic.trim()) {
+        setError("Please select or enter a topic.");
+        return;
+      }
+    }
+
+    setLoading(true);
 
     try {
       const token = localStorage.getItem("access_token");
@@ -75,50 +158,53 @@ function InterviewSetup({ onBack, onInterviewStart }) {
         throw new Error("Please login again.");
       }
 
+      const requestBody = {
+        mode,
+        role: mode === "resume" ? role : "",
+        topic: mode === "topic" ? topic.trim() : "",
+        difficulty,
+        total_questions: totalQuestions,
+      };
+
+      // Resume ID is only required for resume mode
+      if (mode === "resume") {
+        requestBody.resume_id = Number(resumeId);
+      }
+
       const response = await fetch(
         "http://127.0.0.1:8000/api/interviews/create/",
         {
           method: "POST",
-
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-
-          body: JSON.stringify({
-            resume_id: Number(selectedResume),
-            role: role,
-            difficulty: difficulty,
-            total_questions: Number(totalQuestions),
-          }),
+          body: JSON.stringify(requestBody),
         }
       );
 
       const data = await response.json();
 
-      console.log("Interview API response:", data);
-
-      
       if (!response.ok) {
         throw new Error(
-          `${data.detail || "Failed to create interview."}${
-            data.error ? `\n${data.error}` : ""
-          }`
+          data.detail ||
+            data.error ||
+            "Failed to create interview."
         );
       }
 
       onInterviewStart(data);
-
     } catch (error) {
-      console.error("Interview creation error:", error);
       setError(error.message);
     } finally {
-      setLoadingInterview(false);
+      setLoading(false);
     }
   };
 
   return (
     <div className="interview-setup-page">
+
+      {/* NAVBAR */}
 
       <nav className="interview-nav">
 
@@ -129,14 +215,18 @@ function InterviewSetup({ onBack, onInterviewStart }) {
         <button
           className="back-btn"
           onClick={onBack}
-          disabled={loadingInterview}
+          disabled={loading}
         >
           ← Dashboard
         </button>
 
       </nav>
 
+      {/* MAIN */}
+
       <main className="interview-setup-content">
+
+        {/* HEADER */}
 
         <div className="setup-header">
 
@@ -144,117 +234,338 @@ function InterviewSetup({ onBack, onInterviewStart }) {
             🤖
           </div>
 
-          <h1>AI Interview Setup</h1>
+          <h1>AI Interview</h1>
 
           <p>
-            Your resume + target role will be used to
-            create a personalized AI interview.
+            Choose your interview type and practice
+            with an AI-powered interviewer.
           </p>
 
         </div>
 
+        {/* SETUP CARD */}
+
         <div className="setup-card">
 
-          {error && (
-            <div className="interview-error">
-              {error}
+          {/* ----------------------------------- */}
+          {/* INTERVIEW MODE */}
+          {/* ----------------------------------- */}
+
+          <div className="form-group">
+
+            <label>
+              Interview Type
+            </label>
+
+            <div className="interview-mode-grid">
+
+              <button
+                type="button"
+                className={`mode-card ${
+                  mode === "resume"
+                    ? "active"
+                    : ""
+                }`}
+                onClick={() =>
+                  handleModeChange("resume")
+                }
+              >
+                <span className="mode-icon">
+                  📄
+                </span>
+
+                <strong>
+                  Resume Based
+                </strong>
+
+                <small>
+                  Questions based on your resume
+                </small>
+              </button>
+
+              <button
+                type="button"
+                className={`mode-card ${
+                  mode === "topic"
+                    ? "active"
+                    : ""
+                }`}
+                onClick={() =>
+                  handleModeChange("topic")
+                }
+              >
+                <span className="mode-icon">
+                  🎯
+                </span>
+
+                <strong>
+                  Topic Based
+                </strong>
+
+                <small>
+                  Practice a specific topic
+                </small>
+              </button>
+
+              <button
+                type="button"
+                className={`mode-card ${
+                  mode === "hr"
+                    ? "active"
+                    : ""
+                }`}
+                onClick={() =>
+                  handleModeChange("hr")
+                }
+              >
+                <span className="mode-icon">
+                  👔
+                </span>
+
+                <strong>
+                  HR Interview
+                </strong>
+
+                <small>
+                  HR & behavioral questions
+                </small>
+              </button>
+
+            </div>
+
+          </div>
+
+          {/* ----------------------------------- */}
+          {/* RESUME MODE */}
+          {/* ----------------------------------- */}
+
+          {mode === "resume" && (
+            <>
+              <div className="form-group">
+
+                <label>
+                  Select Resume
+                </label>
+
+                {loadingResumes ? (
+                  <div className="field-loading">
+                    Loading your resumes...
+                  </div>
+                ) : resumes.length > 0 ? (
+                  <select
+                    value={resumeId}
+                    onChange={(event) =>
+                      setResumeId(
+                        event.target.value
+                      )
+                    }
+                  >
+                    <option value="">
+                      Select a resume
+                    </option>
+
+                    {resumes.map((resume) => (
+                      <option
+                        key={resume.id}
+                        value={resume.id}
+                      >
+                        {resume.title ||
+                          resume.name ||
+                          resume.filename ||
+                          `Resume #${resume.id}`}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <div className="no-resume-message">
+                    No resume found. Please upload
+                    a resume first.
+                  </div>
+                )}
+
+              </div>
+
+              <div className="form-group">
+
+                <label>
+                  Target Job Role
+                </label>
+
+                <select
+                  value={role}
+                  onChange={(event) =>
+                    setRole(event.target.value)
+                  }
+                >
+                  <option>
+                    Data Scientist
+                  </option>
+
+                  <option>
+                    Data Analyst
+                  </option>
+
+                  <option>
+                    Machine Learning Engineer
+                  </option>
+
+                  <option>
+                    Python Developer
+                  </option>
+
+                  <option>
+                    AI Engineer
+                  </option>
+
+                  <option>
+                    Software Developer
+                  </option>
+                </select>
+
+              </div>
+            </>
+          )}
+
+          {/* ----------------------------------- */}
+          {/* TOPIC MODE */}
+          {/* ----------------------------------- */}
+
+          {mode === "topic" && (
+            <>
+
+              <div className="form-group">
+
+                <label>
+                  Select Topic
+                </label>
+
+                <select
+                  value={
+                    [
+                      "Python",
+                      "SQL",
+                      "Machine Learning",
+                      "Data Science",
+                      "Data Analysis",
+                      "Statistics",
+                      "Power BI",
+                      "Deep Learning",
+                      "Generative AI",
+                      "Agentic AI",
+                      "Django",
+                      "React",
+                      "JavaScript",
+                    ].includes(topic)
+                      ? topic
+                      : ""
+                  }
+                  onChange={(event) =>
+                    setTopic(event.target.value)
+                  }
+                >
+                  <option value="">
+                    Choose a topic
+                  </option>
+
+                  <option>Python</option>
+                  <option>SQL</option>
+                  <option>Machine Learning</option>
+                  <option>Data Science</option>
+                  <option>Data Analysis</option>
+                  <option>Statistics</option>
+                  <option>Power BI</option>
+                  <option>Deep Learning</option>
+                  <option>Generative AI</option>
+                  <option>Agentic AI</option>
+                  <option>Django</option>
+                  <option>React</option>
+                  <option>JavaScript</option>
+                </select>
+
+              </div>
+
+              <div className="form-group">
+
+                <label>
+                  Or Enter Custom Topic
+                </label>
+
+                <input
+                  type="text"
+                  value={
+                    [
+                      "Python",
+                      "SQL",
+                      "Machine Learning",
+                      "Data Science",
+                      "Data Analysis",
+                      "Statistics",
+                      "Power BI",
+                      "Deep Learning",
+                      "Generative AI",
+                      "Agentic AI",
+                      "Django",
+                      "React",
+                      "JavaScript",
+                    ].includes(topic)
+                      ? ""
+                      : topic
+                  }
+                  onChange={(event) =>
+                    setTopic(event.target.value)
+                  }
+                  placeholder="Example: Feature Engineering"
+                />
+
+              </div>
+
+            </>
+          )}
+
+          {/* ----------------------------------- */}
+          {/* HR MODE */}
+          {/* ----------------------------------- */}
+
+          {mode === "hr" && (
+            <div className="hr-info-box">
+
+              <div className="hr-info-icon">
+                👔
+              </div>
+
+              <div>
+                <strong>
+                  HR & Behavioral Interview
+                </strong>
+
+                <p>
+                  You will be asked questions about
+                  communication, teamwork, strengths,
+                  weaknesses, career goals and
+                  workplace situations.
+                </p>
+              </div>
+
             </div>
           )}
 
-          {/* Resume */}
+          {/* ----------------------------------- */}
+          {/* DIFFICULTY */}
+          {/* ----------------------------------- */}
 
           <div className="form-group">
 
             <label>
-              Select Your Resume
-            </label>
-
-            {loadingResumes ? (
-              <div className="loading-text">
-                Loading your resumes...
-              </div>
-            ) : resumes.length === 0 ? (
-              <div className="no-resume-box">
-                No uploaded resume found.
-                Please upload your resume first.
-              </div>
-            ) : (
-              <select
-                value={selectedResume}
-                onChange={(event) =>
-                  setSelectedResume(event.target.value)
-                }
-                disabled={loadingInterview}
-              >
-                <option value="">
-                  Select a resume
-                </option>
-
-                {resumes.map((resume) => (
-                  <option
-                    key={resume.id}
-                    value={resume.id}
-                  >
-                    {resume.title}
-                  </option>
-                ))}
-              </select>
-            )}
-
-          </div>
-
-          {/* Role */}
-
-          <div className="form-group">
-
-            <label>
-              Target Job Role
-            </label>
-
-            <select
-              value={role}
-              onChange={(event) =>
-                setRole(event.target.value)
-              }
-              disabled={loadingInterview}
-            >
-              <option value="Data Scientist">
-                Data Scientist
-              </option>
-
-              <option value="Data Analyst">
-                Data Analyst
-              </option>
-
-              <option value="Python Developer">
-                Python Developer
-              </option>
-
-              <option value="ML Engineer">
-                ML Engineer
-              </option>
-
-              <option value="AI Engineer">
-                AI Engineer
-              </option>
-            </select>
-
-          </div>
-
-          {/* Difficulty */}
-
-          <div className="form-group">
-
-            <label>
-              Interview Difficulty
+              Difficulty
             </label>
 
             <select
               value={difficulty}
               onChange={(event) =>
-                setDifficulty(event.target.value)
+                setDifficulty(
+                  event.target.value
+                )
               }
-              disabled={loadingInterview}
             >
               <option value="easy">
                 Easy
@@ -271,7 +582,9 @@ function InterviewSetup({ onBack, onInterviewStart }) {
 
           </div>
 
-          {/* Questions */}
+          {/* ----------------------------------- */}
+          {/* QUESTIONS */}
+          {/* ----------------------------------- */}
 
           <div className="form-group">
 
@@ -282,64 +595,92 @@ function InterviewSetup({ onBack, onInterviewStart }) {
             <select
               value={totalQuestions}
               onChange={(event) =>
-                setTotalQuestions(event.target.value)
+                setTotalQuestions(
+                  Number(event.target.value)
+                )
               }
-              disabled={loadingInterview}
             >
-              <option value="5">
-                5 Questions
-              </option>
-
-              <option value="10">
-                10 Questions
-              </option>
-
-              <option value="15">
-                15 Questions
-              </option>
+              <option value={10}>10 Questions</option>
+              <option value={20}>20 Questions</option>
+              <option value={30}>30 Questions</option>
             </select>
 
+            <small className="question-note">
+              Self Introduction is mandatory and
+              will be asked before these questions.
+            </small>
+
           </div>
+
+          {/* ERROR */}
+
+          {error && (
+            <div className="interview-error">
+              {error}
+            </div>
+          )}
+
+          {/* START */}
 
           <button
             className="start-interview-btn"
             onClick={handleStartInterview}
             disabled={
-              loadingInterview ||
+              loading ||
               loadingResumes ||
-              resumes.length === 0
+              (
+                mode === "resume" &&
+                resumes.length === 0
+              )
             }
           >
-            {loadingInterview
-              ? "⏳ Generating Interview..."
+            {loading
+              ? "🤖 Generating Questions..."
               : "🚀 Start AI Interview →"}
           </button>
 
         </div>
 
+        {/* INFO */}
+
         <div className="setup-info">
 
           <div>
-            <span>📄</span>
-            <strong>Resume Based</strong>
-            <p>
-              AI uses your uploaded resume
-            </p>
-          </div>
+            <span>🗣️</span>
 
-          <div>
-            <span>🎯</span>
-            <strong>Role Based</strong>
+            <strong>
+              Self Introduction
+            </strong>
+
             <p>
-              Questions match your target role
+              Every interview starts with
+              your introduction.
             </p>
           </div>
 
           <div>
             <span>🤖</span>
-            <strong>AI Generated</strong>
+
+            <strong>
+              AI Generated
+            </strong>
+
             <p>
-              Personalized interview questions
+              Natural questions based on
+              your selected interview type.
+            </p>
+          </div>
+
+          <div>
+            <span>📊</span>
+
+            <strong>
+              Performance
+            </strong>
+
+            <p>
+              Get score and detailed AI
+              feedback after your interview.
             </p>
           </div>
 

@@ -11,50 +11,64 @@ from .services import (
     evaluate_audio_answer,
 )
 
-
 class InterviewCreateView(APIView):
 
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
 
-        resume_id = request.data.get("resume_id")
-        role = request.data.get("role")
-        difficulty = request.data.get("difficulty", "medium")
+        # -----------------------------------------
+        # Get interview setup data
+        # -----------------------------------------
+
+        mode = request.data.get(
+            "mode",
+            "resume"
+        )
+
+        resume_id = request.data.get(
+            "resume_id"
+        )
+
+        role = request.data.get(
+            "role",
+            ""
+        )
+
+        topic = request.data.get(
+            "topic",
+            ""
+        )
+
+        difficulty = request.data.get(
+            "difficulty",
+            "medium"
+        )
+
         total_questions = request.data.get(
             "total_questions",
             10
         )
 
         # -----------------------------------------
-        # Validate resume
+        # Validate mode
         # -----------------------------------------
 
-        if not resume_id:
+        valid_modes = [
+            "resume",
+            "topic",
+            "hr",
+        ]
+
+        if mode not in valid_modes:
+
             return Response(
-                {"detail": "Resume ID is required."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        try:
-            resume = Resume.objects.get(
-                id=resume_id,
-                user=request.user
-            )
-
-        except Resume.DoesNotExist:
-            return Response(
-                {"detail": "Resume not found."},
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-        # -----------------------------------------
-        # Validate role
-        # -----------------------------------------
-
-        if not role:
-            return Response(
-                {"detail": "Role is required."},
+                {
+                    "detail": (
+                        "Mode must be resume, "
+                        "topic, or hr."
+                    )
+                },
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -65,10 +79,11 @@ class InterviewCreateView(APIView):
         valid_difficulties = [
             "easy",
             "medium",
-            "hard"
+            "hard",
         ]
 
         if difficulty not in valid_difficulties:
+
             return Response(
                 {
                     "detail": (
@@ -89,23 +104,108 @@ class InterviewCreateView(APIView):
                 total_questions
             )
 
-            if (
-                total_questions < 1
-                or total_questions > 50
-            ):
+            # Only allow 10, 20, 30
+            if total_questions not in [
+                10,
+                20,
+                30,
+            ]:
                 raise ValueError
 
-        except (ValueError, TypeError):
+        except (
+            ValueError,
+            TypeError,
+        ):
 
             return Response(
                 {
                     "detail": (
                         "Number of questions must "
-                        "be between 1 and 50."
+                        "be 10, 20, or 30."
                     )
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+        # -----------------------------------------
+        # Resume Based Interview
+        # -----------------------------------------
+
+        resume = None
+
+        if mode == "resume":
+
+            if not resume_id:
+
+                return Response(
+                    {
+                        "detail": (
+                            "Resume ID is required "
+                            "for resume-based interview."
+                        )
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            try:
+
+                resume = Resume.objects.get(
+                    id=resume_id,
+                    user=request.user
+                )
+
+            except Resume.DoesNotExist:
+
+                return Response(
+                    {
+                        "detail": "Resume not found."
+                    },
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            if not role:
+
+                return Response(
+                    {
+                        "detail": (
+                            "Role is required for "
+                            "resume-based interview."
+                        )
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        # -----------------------------------------
+        # Topic Based Interview
+        # -----------------------------------------
+
+        if mode == "topic":
+
+            topic = str(
+                topic or ""
+            ).strip()
+
+            if not topic:
+
+                return Response(
+                    {
+                        "detail": (
+                            "Topic is required for "
+                            "topic-based interview."
+                        )
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        # -----------------------------------------
+        # HR Interview
+        # -----------------------------------------
+
+        if mode == "hr":
+
+            role = "HR Interview"
+
+            topic = ""
 
         # -----------------------------------------
         # Generate AI questions
@@ -117,7 +217,13 @@ class InterviewCreateView(APIView):
                 role=role,
                 difficulty=difficulty,
                 total_questions=total_questions,
-                resume_text=resume.extracted_text
+                resume_text=(
+                    resume.extracted_text
+                    if resume
+                    else ""
+                ),
+                mode=mode,
+                topic=topic,
             )
 
         except Exception as e:
@@ -128,40 +234,66 @@ class InterviewCreateView(APIView):
                         "Failed to generate "
                         "interview questions."
                     ),
-                    "error": str(e)
+                    "error": str(e),
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
         # -----------------------------------------
-        # Create interview
+        # Create Interview
         # -----------------------------------------
 
         interview = Interview.objects.create(
             user=request.user,
             resume=resume,
+            mode=mode,
+            topic=topic,
             role=role,
             difficulty=difficulty,
-            total_questions=total_questions
+            total_questions=total_questions,
         )
 
         # -----------------------------------------
-        # Save generated questions
+        # Mandatory Self Introduction
+        # -----------------------------------------
+
+        InterviewQuestion.objects.create(
+            interview=interview,
+            question=(
+                "Please introduce yourself "
+                "and tell me about your background, "
+                "skills, and career goals."
+            ),
+            question_type="introduction",
+            difficulty="easy",
+            order=1,
+        )
+
+        # -----------------------------------------
+        # Save AI generated questions
         # -----------------------------------------
 
         for index, question_data in enumerate(
             questions,
-            start=1
+            start=2
         ):
 
             InterviewQuestion.objects.create(
                 interview=interview,
-                question=question_data["question"],
+                question=question_data[
+                    "question"
+                ],
+                question_type=question_data.get(
+                    "question_type",
+                    "hr"
+                    if mode == "hr"
+                    else "technical"
+                ),
                 difficulty=question_data.get(
                     "difficulty",
                     difficulty
                 ),
-                order=index
+                order=index,
             )
 
         # -----------------------------------------

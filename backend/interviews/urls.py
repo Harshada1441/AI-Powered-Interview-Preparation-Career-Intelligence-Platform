@@ -26,5 +26,6 @@ urlpatterns = [
         InterviewAnswerView.as_view(),
         name="interview-answer"
     ),
+    
 ]
 

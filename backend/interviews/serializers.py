@@ -1,8 +1,11 @@
 from rest_framework import serializers
+
 from .models import Interview, InterviewQuestion
 
 
-class InterviewQuestionSerializer(serializers.ModelSerializer):
+class InterviewQuestionSerializer(
+    serializers.ModelSerializer
+):
 
     class Meta:
         model = InterviewQuestion
@@ -10,6 +13,7 @@ class InterviewQuestionSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "question",
+            "question_type",
             "difficulty",
             "order",
             "user_answer",
@@ -21,6 +25,7 @@ class InterviewQuestionSerializer(serializers.ModelSerializer):
 
         read_only_fields = [
             "id",
+            "question_type",
             "answer_score",
             "answer_feedback",
             "is_correct",
@@ -28,7 +33,9 @@ class InterviewQuestionSerializer(serializers.ModelSerializer):
         ]
 
 
-class InterviewSerializer(serializers.ModelSerializer):
+class InterviewSerializer(
+    serializers.ModelSerializer
+):
 
     questions = InterviewQuestionSerializer(
         many=True,
@@ -37,8 +44,11 @@ class InterviewSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Interview
+
         fields = [
             "id",
+            "mode",
+            "topic",
             "role",
             "difficulty",
             "total_questions",

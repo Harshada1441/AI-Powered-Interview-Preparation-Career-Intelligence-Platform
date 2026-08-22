@@ -4,6 +4,13 @@ from resumes.models import Resume
 
 
 class Interview(models.Model):
+
+    INTERVIEW_MODE_CHOICES = [
+        ("resume", "Resume Based"),
+        ("topic", "Topic Based"),
+        ("hr", "HR Interview"),
+    ]
+
     DIFFICULTY_CHOICES = [
         ("easy", "Easy"),
         ("medium", "Medium"),
@@ -24,7 +31,28 @@ class Interview(models.Model):
         blank=True
     )
 
-    role = models.CharField(max_length=100)
+    # -----------------------------------------
+    # Interview Mode
+    # -----------------------------------------
+
+    mode = models.CharField(
+        max_length=20,
+        choices=INTERVIEW_MODE_CHOICES,
+        default="resume"
+    )
+
+    # Used for Topic Based Interview
+    topic = models.CharField(
+        max_length=150,
+        blank=True,
+        default=""
+    )
+
+    role = models.CharField(
+        max_length=100,
+        blank=True,
+        default=""
+    )
 
     difficulty = models.CharField(
         max_length=20,
@@ -32,7 +60,9 @@ class Interview(models.Model):
         default="medium"
     )
 
-    total_questions = models.PositiveIntegerField(default=10)
+    total_questions = models.PositiveIntegerField(
+        default=10
+    )
 
     score = models.FloatField(
         null=True,
@@ -49,10 +79,17 @@ class Interview(models.Model):
     )
 
     def __str__(self):
-        return f"{self.role} - {self.user}"
+        return f"{self.mode} - {self.role or self.topic} - {self.user}"
 
 
 class InterviewQuestion(models.Model):
+
+    QUESTION_TYPE_CHOICES = [
+        ("introduction", "Self Introduction"),
+        ("technical", "Technical"),
+        ("hr", "HR"),
+    ]
+
     interview = models.ForeignKey(
         Interview,
         on_delete=models.CASCADE,
@@ -60,6 +97,12 @@ class InterviewQuestion(models.Model):
     )
 
     question = models.TextField()
+
+    question_type = models.CharField(
+        max_length=20,
+        choices=QUESTION_TYPE_CHOICES,
+        default="technical"
+    )
 
     difficulty = models.CharField(
         max_length=20,
@@ -93,4 +136,8 @@ class InterviewQuestion(models.Model):
     )
 
     def __str__(self):
-        return f"Q{self.order} - {self.interview.role}"
+        return (
+            f"Q{self.order} - "
+            f"{self.interview.role or self.interview.topic}"
+        )
+    

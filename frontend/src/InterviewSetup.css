@@ -1,8 +1,16 @@
+/* =========================================================
+   INTERVIEW SETUP PAGE
+   ========================================================= */
+
 .interview-setup-page {
   min-height: 100vh;
   background: linear-gradient(135deg, #f8faff, #eef2ff);
   color: #172033;
 }
+
+/* =========================================================
+   NAVBAR
+   ========================================================= */
 
 .interview-nav {
   height: 72px;
@@ -30,11 +38,23 @@
   cursor: pointer;
 }
 
+.back-btn:hover {
+  background: #4054c5;
+}
+
+/* =========================================================
+   MAIN CONTENT
+   ========================================================= */
+
 .interview-setup-content {
-  max-width: 850px;
+  max-width: 950px;
   margin: auto;
   padding: 65px 20px;
 }
+
+/* =========================================================
+   HEADER
+   ========================================================= */
 
 .setup-header {
   text-align: center;
@@ -45,11 +65,9 @@
   width: 75px;
   height: 75px;
   margin: 0 auto 18px;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
   background: #e9edff;
   border-radius: 22px;
   font-size: 38px;
@@ -58,13 +76,18 @@
 .setup-header h1 {
   color: #172033 !important;
   font-size: 42px;
-  margin-bottom: 12px;
+  margin: 0 0 12px;
 }
 
 .setup-header p {
   color: #64748b;
   font-size: 17px;
+  margin: 0;
 }
+
+/* =========================================================
+   MAIN CARD
+   ========================================================= */
 
 .setup-card {
   background: #ffffff;
@@ -73,6 +96,10 @@
   border: 1px solid #e2e8f0;
   box-shadow: 0 15px 45px rgba(15, 23, 42, 0.08);
 }
+
+/* =========================================================
+   FORM
+   ========================================================= */
 
 .form-group {
   margin-bottom: 24px;
@@ -85,20 +112,19 @@
   font-weight: 600;
 }
 
+/* SELECT */
+
 .form-group select {
   width: 100%;
   box-sizing: border-box;
-
   padding: 14px;
-
   border: 1px solid #cbd5e1;
   border-radius: 12px;
-
   background: #ffffff;
   color: #172033 !important;
-
   font-size: 15px;
   outline: none;
+  cursor: pointer;
 }
 
 .form-group select:focus {
@@ -106,26 +132,129 @@
   box-shadow: 0 0 0 3px rgba(79, 99, 216, 0.12);
 }
 
-.start-interview-btn {
+/* INPUT */
+
+.form-group input {
   width: 100%;
-  padding: 15px;
-
-  border: none;
+  box-sizing: border-box;
+  padding: 14px;
+  border: 1px solid #cbd5e1;
   border-radius: 12px;
+  background: #ffffff;
+  color: #172033;
+  font-size: 15px;
+  outline: none;
+}
 
-  background: linear-gradient(135deg, #4f63d8, #6d4dd8);
-  color: white;
+.form-group input:focus {
+  border-color: #4f63d8;
+  box-shadow: 0 0 0 3px rgba(79, 99, 216, 0.12);
+}
 
-  font-size: 16px;
-  font-weight: 700;
+.form-group input::placeholder {
+  color: #94a3b8;
+}
+
+/* =========================================================
+   INTERVIEW TYPE
+   ========================================================= */
+
+.interview-mode-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  width: 100%;
+}
+
+/* MODE CARD */
+
+.mode-card {
+  min-height: 145px;
+  padding: 20px 15px;
+  border: 2px solid #e2e8f0;
+  border-radius: 16px;
+  background: #ffffff;
+  color: #172033;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
 
   cursor: pointer;
+
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+
+  font-family: inherit;
 }
 
-.start-interview-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+.mode-card:hover {
+  border-color: #8b9ae8;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
 }
+
+/* ACTIVE MODE */
+
+.mode-card.active {
+  border-color: #4f63d8;
+  background: #f1f4ff;
+  box-shadow: 0 8px 22px rgba(79, 99, 216, 0.15);
+}
+
+/* ICON */
+
+.mode-icon {
+  display: block;
+  font-size: 34px;
+  margin-bottom: 10px;
+}
+
+/* TITLE */
+
+.mode-card strong {
+  display: block;
+  color: #172033;
+  font-size: 17px;
+  margin-bottom: 6px;
+}
+
+/* DESCRIPTION */
+
+.mode-card small {
+  display: block;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+/* =========================================================
+   LOADING / RESUME
+   ========================================================= */
+
+.field-loading {
+  padding: 14px;
+  color: #64748b;
+  background: #f8fafc;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.no-resume-message {
+  padding: 15px;
+  background: #fff7ed;
+  color: #c2410c;
+  border-radius: 12px;
+  text-align: center;
+}
+
+/* Keep compatibility with old class */
 
 .loading-text {
   padding: 14px;
@@ -141,17 +270,118 @@
   border-radius: 12px;
 }
 
+/* =========================================================
+   HR INFO
+   ========================================================= */
+
+.hr-info-box {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+
+  padding: 20px;
+
+  background: #f8faff;
+  border: 1px solid #dbe3ff;
+  border-radius: 14px;
+
+  margin-bottom: 24px;
+}
+
+.hr-info-icon {
+  width: 55px;
+  height: 55px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #e9edff;
+  border-radius: 14px;
+
+  font-size: 28px;
+}
+
+.hr-info-box strong {
+  display: block;
+  color: #172033;
+  margin-bottom: 5px;
+}
+
+.hr-info-box p {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* =========================================================
+   QUESTION NOTE
+   ========================================================= */
+
+.question-note {
+  display: block;
+  margin-top: 8px;
+  color: #64748b;
+  font-size: 13px;
+}
+
+/* =========================================================
+   ERROR
+   ========================================================= */
+
 .interview-error {
   padding: 13px;
   margin-bottom: 20px;
-
   border-radius: 10px;
-
   background: #fef2f2;
   color: #dc2626 !important;
-
   font-weight: 500;
+  white-space: pre-wrap;
 }
+
+/* =========================================================
+   START BUTTON
+   ========================================================= */
+
+.start-interview-btn {
+  width: 100%;
+  padding: 15px;
+  border: none;
+  border-radius: 12px;
+
+  background: linear-gradient(
+    135deg,
+    #4f63d8,
+    #6d4dd8
+  );
+
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.start-interview-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(79, 99, 216, 0.25);
+}
+
+.start-interview-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* =========================================================
+   INFO CARDS
+   ========================================================= */
 
 .setup-info {
   display: grid;
@@ -181,9 +411,30 @@
 .setup-info p {
   color: #64748b;
   font-size: 13px;
+  line-height: 1.5;
 }
 
-@media (max-width: 700px) {
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 800px) {
+  .interview-setup-content {
+    padding: 45px 15px;
+  }
+
+  .setup-card {
+    padding: 25px 20px;
+  }
+
+  .interview-mode-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mode-card {
+    min-height: 120px;
+  }
+
   .setup-info {
     grid-template-columns: 1fr;
   }
@@ -193,6 +444,24 @@
   }
 }
 
-.interview-error {
-  white-space: pre-wrap;
+@media (max-width: 500px) {
+  .interview-nav {
+    padding: 0 15px;
+  }
+
+  .interview-logo {
+    font-size: 16px;
+  }
+
+  .back-btn {
+    padding: 9px 13px;
+  }
+
+  .setup-card {
+    padding: 20px 15px;
+  }
+
+  .setup-header p {
+    font-size: 15px;
+  }
 }
